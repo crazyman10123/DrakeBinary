@@ -14,3 +14,7 @@ C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.csproj
 C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.exe
 C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.pdb
 C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\System.Shim.dll
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\DrakeBinary.exe.manifest
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\DrakeBinary.application
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.exe.manifest
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.application

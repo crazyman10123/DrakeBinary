@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
@@ -19,6 +20,8 @@ namespace DrakeBinary
             InitializeComponent();
         }
 
+        public string tempPath = Path.GetTempPath() + "DrakeBinary";
+
         private void ConFromText(object sender, RoutedEventArgs e)
         {
             String ToParse = inputTB.Text.ToString();
@@ -29,8 +32,9 @@ namespace DrakeBinary
             var blank = new Bitmap(Properties.Resources.blank);
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
             saveFileDialog1.Filter = "zip files (*.zip)|*.zip";
-            saveFileDialog1.FilterIndex = 2;
+            saveFileDialog1.FilterIndex = 1;
             saveFileDialog1.RestoreDirectory = true;
+            Directory.CreateDirectory(tempPath);
             if (saveFileDialog1.ShowDialog() == true)
             {
                 using (FileStream zipToOpen = new FileStream(saveFileDialog1.FileName, FileMode.Create))
@@ -51,19 +55,19 @@ namespace DrakeBinary
                         {
                             if (c == '0')
                             {
-                                String fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".png";
+                                String fileName = tempPath + "\\drakeNah.png";
                                 nah.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
                                 archive.CreateEntryFromFile(fileName, i + ".png");
                             }
                             else if (c == '1')
                             {
-                                String fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".png";
+                                String fileName = tempPath + "\\drakeYah.png";
                                 yah.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
                                 archive.CreateEntryFromFile(fileName, i + ".png");
                             }
                             else
                             {
-                                String fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".png";
+                                String fileName = tempPath + "\\blank.png";
                                 blank.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
                                 archive.CreateEntryFromFile(fileName, i + ".png");
                             }
@@ -76,21 +80,81 @@ namespace DrakeBinary
 
         private void ConFromZip(object sender, RoutedEventArgs e)
         {
-
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "zip files (.zip)|*.zip";
+            openFileDialog.FilterIndex = 1;
+            openFileDialog.RestoreDirectory = true;
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var filePath = openFileDialog.FileName;
+                string tempFolder = tempPath + "\\" + Guid.NewGuid().ToString();
+                Directory.CreateDirectory(tempFolder);
+                string extractPath = tempFolder + Path.DirectorySeparatorChar;
+                using (ZipArchive archive = ZipFile.OpenRead(openFileDialog.FileName))
+                {
+                    foreach (ZipArchiveEntry entry in archive.Entries)
+                    {
+                        if (entry.FullName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string destPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
+                            if (destPath.StartsWith(extractPath, StringComparison.Ordinal))
+                                entry.ExtractToFile(destPath);
+                            string secondLine;
+                            using (var reader = new StreamReader(destPath))
+                            {
+                                reader.ReadLine();
+                                secondLine = reader.ReadLine();
+                                Console.WriteLine(BinaryToString(secondLine));
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public static string StringToBinary(string data)
         {
             UTF8Encoding encoding = new UTF8Encoding();
             byte[] buf = encoding.GetBytes(data);
+            string result = "";
 
             StringBuilder binaryStringBuilder = new StringBuilder();
-            foreach (byte b in buf)
+
+            foreach (byte value in data)
             {
-                binaryStringBuilder.Append(Convert.ToString(b, 2));
-                binaryStringBuilder.Append(" ");
+                //storage for the individual byte
+                string binarybyte = Convert.ToString(value, 2);
+                //if the binarybyte is not 8 characters long, its not a proper result
+                while (binarybyte.Length < 8)
+                {
+                    //prepend the value with a 0
+                    binarybyte = "0" + binarybyte;
+                }
+                //append the binarybyte to the result
+                result += binarybyte;
+                result += " ";
             }
-            return binaryStringBuilder.ToString();
+            //return the result
+            return result;
         }
+
+        public static string BinaryToString(string data)
+        {
+            List<Byte> byteList = new List<Byte>();
+            string result = "";
+
+            data = data.Replace(" ", String.Empty);
+            Console.WriteLine(data);
+
+            while (data.Length > 0)
+            {
+                var first8 = data.Substring(0, 8);
+                data = data.Substring(8);
+                var number = Convert.ToInt32(first8, 2);
+                result += (char)number;
+            }
+            return result;
+        }
+
     }
 }
