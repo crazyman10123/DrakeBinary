@@ -1,0 +1,16 @@
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\DrakeBinary.exe.config
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\DrakeBinary.exe
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\DrakeBinary.pdb
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.csprojResolveAssemblyReference.cache
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\MainWindow.g.cs
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\App.g.cs
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary_MarkupCompile.cache
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary_MarkupCompile.lref
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\MainWindow.baml
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.g.resources
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.Properties.Resources.resources
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.csproj.GenerateResource.Cache
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.csproj.CoreCompileInputs.cache
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.exe
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\obj\Debug\DrakeBinary.pdb
+C:\Users\dmaci\source\repos\DrakeBinary\DrakeBinary\bin\Debug\System.Shim.dll
