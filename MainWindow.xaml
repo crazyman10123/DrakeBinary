@@ -5,6 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DrakeBinary"
         mc:Ignorable="d"
+        Closing="Window_Closing"
+        Closed="Window_Closed"
         Title="Drake Binary" Height="350" Width="525">
     <Grid>
         <Label Content="Enter text to be converted" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>

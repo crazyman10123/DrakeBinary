@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
@@ -18,18 +19,20 @@ namespace DrakeBinary
         public MainWindow()
         {
             InitializeComponent();
+            
         }
 
         public string tempPath = Path.GetTempPath() + "DrakeBinary";
+        public Bitmap nah = new Bitmap(Properties.Resources.drakeNah);
+        public Bitmap yah = new Bitmap(Properties.Resources.drakeYeh);
+        public Bitmap blank = new Bitmap(Properties.Resources.blank);
 
         private void ConFromText(object sender, RoutedEventArgs e)
         {
             String ToParse = inputTB.Text.ToString();
             String finalBinary = StringToBinary(ToParse);
             inputTB.Text = finalBinary;
-            var nah = new Bitmap(Properties.Resources.drakeNah);
-            var yah = new Bitmap(Properties.Resources.drakeYeh);
-            var blank = new Bitmap(Properties.Resources.blank);
+            
             SaveFileDialog saveFileDialog1 = new SaveFileDialog();
             saveFileDialog1.Filter = "zip files (*.zip)|*.zip";
             saveFileDialog1.FilterIndex = 1;
@@ -80,6 +83,8 @@ namespace DrakeBinary
 
         private void ConFromZip(object sender, RoutedEventArgs e)
         {
+            string tempFolder = "";
+            string readBinary = "";
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "zip files (.zip)|*.zip";
             openFileDialog.FilterIndex = 1;
@@ -87,29 +92,33 @@ namespace DrakeBinary
             if (openFileDialog.ShowDialog() == true)
             {
                 var filePath = openFileDialog.FileName;
-                string tempFolder = tempPath + "\\" + Guid.NewGuid().ToString();
+                tempFolder = tempPath + "\\" + Guid.NewGuid().ToString();
                 Directory.CreateDirectory(tempFolder);
                 string extractPath = tempFolder + Path.DirectorySeparatorChar;
                 using (ZipArchive archive = ZipFile.OpenRead(openFileDialog.FileName))
                 {
                     foreach (ZipArchiveEntry entry in archive.Entries)
                     {
-                        if (entry.FullName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                        if (entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                         {
                             string destPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
                             if (destPath.StartsWith(extractPath, StringComparison.Ordinal))
                                 entry.ExtractToFile(destPath);
-                            string secondLine;
-                            using (var reader = new StreamReader(destPath))
+                            Image curImage = Image.FromFile(destPath);
+                            if (imgCompare((Bitmap)curImage, nah))
                             {
-                                reader.ReadLine();
-                                secondLine = reader.ReadLine();
-                                Console.WriteLine(BinaryToString(secondLine));
+                                readBinary += "0";
                             }
+                            else if (imgCompare((Bitmap)curImage, yah))
+                            {
+                                readBinary += "1";
+                            }
+                            curImage.Dispose();
                         }
                     }
                 }
             }
+            inputTB.Text = BinaryToString(readBinary);
         }
 
         public static string StringToBinary(string data)
@@ -154,6 +163,35 @@ namespace DrakeBinary
                 result += (char)number;
             }
             return result;
+        }
+
+        private bool imgCompare(Bitmap imageOne, Bitmap imageTwo)
+        {
+
+            imageOne = (Bitmap)imageOne.GetThumbnailImage(16, 16, null, IntPtr.Zero);
+            imageTwo = (Bitmap)imageTwo.GetThumbnailImage(16, 16, null, IntPtr.Zero);
+
+            if (!imageOne.Size.Equals(imageTwo.Size))
+            {
+                return false;
+            }
+            for (int x = 0; x < imageOne.Width; ++x)
+            {
+                for (int y = 0; y < imageOne.Height; ++y)
+                {
+                    if (imageOne.GetPixel(x, y) != imageTwo.GetPixel(x, y))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            Directory.Delete(tempPath, true);
         }
 
     }
