@@ -22,7 +22,6 @@ namespace DrakeBinary
             
         }
 
-        public string tempPath = Path.GetTempPath() + "DrakeBinary";
         public Bitmap nah = new Bitmap(Properties.Resources.drakeNah);
         public Bitmap yah = new Bitmap(Properties.Resources.drakeYeh);
         public Bitmap blank = new Bitmap(Properties.Resources.blank);
@@ -32,93 +31,48 @@ namespace DrakeBinary
             String ToParse = inputTB.Text.ToString();
             String finalBinary = StringToBinary(ToParse);
             inputTB.Text = finalBinary;
-            
-            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-            saveFileDialog1.Filter = "zip files (*.zip)|*.zip";
-            saveFileDialog1.FilterIndex = 1;
-            saveFileDialog1.RestoreDirectory = true;
-            Directory.CreateDirectory(tempPath);
-            if (saveFileDialog1.ShowDialog() == true)
-            {
-                using (FileStream zipToOpen = new FileStream(saveFileDialog1.FileName, FileMode.Create))
-                {
-                    using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
-                    {
-                        ZipArchiveEntry readmeEntry = archive.CreateEntry("Readme.txt");
-                        using (StreamWriter writer = new StreamWriter(readmeEntry.Open()))
-                        {
-                            writer.WriteLine("Text version of binary below.");
-                            writer.WriteLine(finalBinary);
-                        }
-                        int binLength = finalBinary.Length;
-                        char[] binCharArray = new char[binLength];
-                        binCharArray = finalBinary.ToCharArray();
-                        int i = 0;
-                        foreach (char c in binCharArray)
-                        {
-                            if (c == '0')
-                            {
-                                String fileName = tempPath + "\\drakeNah.png";
-                                nah.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
-                                archive.CreateEntryFromFile(fileName, i + ".png");
-                            }
-                            else if (c == '1')
-                            {
-                                String fileName = tempPath + "\\drakeYah.png";
-                                yah.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
-                                archive.CreateEntryFromFile(fileName, i + ".png");
-                            }
-                            else
-                            {
-                                String fileName = tempPath + "\\blank.png";
-                                blank.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
-                                archive.CreateEntryFromFile(fileName, i + ".png");
-                            }
-                            i++;
-                        }
-                    }
-                }
-            }
+            GenImage(finalBinary);
         }
 
-        private void ConFromZip(object sender, RoutedEventArgs e)
+        private void ConFromImage(object sender, RoutedEventArgs e)
         {
-            string tempFolder = "";
-            string readBinary = "";
+            String readBinary = "";
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "zip files (.zip)|*.zip";
+            openFileDialog.Filter = "png files (.png)|*.png";
             openFileDialog.FilterIndex = 1;
             openFileDialog.RestoreDirectory = true;
             if (openFileDialog.ShowDialog() == true)
             {
-                var filePath = openFileDialog.FileName;
-                tempFolder = tempPath + "\\" + Guid.NewGuid().ToString();
-                Directory.CreateDirectory(tempFolder);
-                string extractPath = tempFolder + Path.DirectorySeparatorChar;
-                using (ZipArchive archive = ZipFile.OpenRead(openFileDialog.FileName))
+                String filename = openFileDialog.FileName;
+                Image image = Image.FromFile(filename);
+                int numRows = image.Height / nah.Height;
+                int numCols = image.Width / nah.Width;
+                var imagearray = new Image[numRows * numCols];
+                for(int i = 0; i < numCols; i++)
                 {
-                    foreach (ZipArchiveEntry entry in archive.Entries)
+                    for(int j = 0; j < numRows; j++)
                     {
-                        if (entry.FullName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
-                        {
-                            string destPath = Path.GetFullPath(Path.Combine(extractPath, entry.FullName));
-                            if (destPath.StartsWith(extractPath, StringComparison.Ordinal))
-                                entry.ExtractToFile(destPath);
-                            Image curImage = Image.FromFile(destPath);
-                            if (imgCompare((Bitmap)curImage, nah))
-                            {
-                                readBinary += "0";
-                            }
-                            else if (imgCompare((Bitmap)curImage, yah))
-                            {
-                                readBinary += "1";
-                            }
-                            curImage.Dispose();
-                        }
+                        var index = i * numCols + j;
+                        imagearray[index] = new Bitmap(nah.Width, nah.Height);
+                        var graphics = Graphics.FromImage(imagearray[index]);
+                        graphics.DrawImage(image, new Rectangle(0, 0, nah.Width, nah.Height), new Rectangle(j * nah.Width, i * nah.Height, nah.Width, nah.Height), GraphicsUnit.Pixel);
+                        graphics.Dispose();
                     }
                 }
+                foreach(Image img in imagearray)
+                {
+                    if (imgCompare((Bitmap)img, nah))
+                    {
+                        readBinary += "0";
+                    }
+                    else if (imgCompare((Bitmap)img, yah))
+                    {
+                        readBinary += "1";
+                    }
+                    img.Dispose();
+                }
+                inputTB.Text = BinaryToString(readBinary);
             }
-            inputTB.Text = BinaryToString(readBinary);
         }
 
         public static string StringToBinary(string data)
@@ -126,8 +80,6 @@ namespace DrakeBinary
             UTF8Encoding encoding = new UTF8Encoding();
             byte[] buf = encoding.GetBytes(data);
             string result = "";
-
-            StringBuilder binaryStringBuilder = new StringBuilder();
 
             foreach (byte value in data)
             {
@@ -185,14 +137,74 @@ namespace DrakeBinary
                     }
                 }
             }
+            imageOne.Dispose();
+            imageTwo.Dispose();
             return true;
 
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void GenImage(String binary)
         {
-            Directory.Delete(tempPath, true);
+            double binLength = binary.Length;
+            int finHeight, finWidth, imgWidth, imgHeight;
+            finHeight = (int)Math.Round(Math.Sqrt(binLength));
+            finWidth = finHeight;
+            imgHeight = finHeight * nah.Height;
+            imgWidth = finWidth * nah.Width;
+            Bitmap newBitmap = new Bitmap(imgWidth, imgHeight);
+            Image[] imagearray = new Image[finHeight * finWidth];
+            int index = 0;
+            foreach (char thisChar in binary)
+            {
+                Image curImage = nah;
+                if (thisChar == '0')
+                {
+                    imagearray[index] = new Bitmap(nah);
+                }
+                else if (thisChar == '1')
+                {
+                    imagearray[index] = new Bitmap(yah);
+                }
+                else if (thisChar == ' ')
+                {
+                    imagearray[index] = new Bitmap(blank);
+                }
+                index++;
+            }
+            using (Graphics graphics = Graphics.FromImage(newBitmap))
+            {
+                graphics.Clear(System.Drawing.Color.Black);
+                for (int i = 0; i < finWidth; i++)
+                {
+                    for (int j = 0; j < finHeight; j++)
+                    {
+                        var newindex = i * finWidth + j;
+                        var destRectangle = new Rectangle(j*nah.Width, i*nah.Height, nah.Width, nah.Height);
+                        var srcRectangle = new Rectangle(0, 0, nah.Width, nah.Height);
+                        try
+                        {
+                            graphics.DrawImage(imagearray[newindex], destRectangle, srcRectangle, GraphicsUnit.Pixel);
+                        } catch(System.ArgumentNullException)
+                        {
+                            graphics.DrawImage(blank, destRectangle, srcRectangle, GraphicsUnit.Pixel);
+                        }
+                    }
+                }
+                graphics.Dispose();
+            }
+            imagearray = null;
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "png files (.png)|*.png";
+            openFileDialog.FilterIndex = 1;
+            openFileDialog.RestoreDirectory = true;
+            openFileDialog.CheckFileExists = false;
+            if (openFileDialog.ShowDialog() == true)
+            {
+                String filename = openFileDialog.FileName;
+                newBitmap.Save(filename);
+            }
+            newBitmap.Dispose();
+            openFileDialog = null;
         }
-
     }
 }
