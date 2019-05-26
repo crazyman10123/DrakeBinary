@@ -47,29 +47,25 @@ namespace DrakeBinary
                 Image image = Image.FromFile(filename);
                 int numRows = image.Height / nah.Height;
                 int numCols = image.Width / nah.Width;
-                var imagearray = new Image[numRows * numCols];
-                for(int i = 0; i < numCols; i++)
+                Image newImage;
+                for(int i = 0; i < numRows; i++)
                 {
-                    for(int j = 0; j < numRows; j++)
+                    for(int j = 0; j < numCols; j++)
                     {
-                        var index = i * numCols + j;
-                        imagearray[index] = new Bitmap(nah.Width, nah.Height);
-                        var graphics = Graphics.FromImage(imagearray[index]);
+                        newImage = new Bitmap(nah.Width, nah.Height);
+                        var graphics = Graphics.FromImage(newImage);
                         graphics.DrawImage(image, new Rectangle(0, 0, nah.Width, nah.Height), new Rectangle(j * nah.Width, i * nah.Height, nah.Width, nah.Height), GraphicsUnit.Pixel);
                         graphics.Dispose();
+                        if(imgCompare((Bitmap)newImage, nah))
+                        {
+                            readBinary += "0";
+                        }
+                        else if (imgCompare((Bitmap)newImage, yah))
+                        {
+                            readBinary += "1";
+                        }
+                        newImage.Dispose();
                     }
-                }
-                foreach(Image img in imagearray)
-                {
-                    if (imgCompare((Bitmap)img, nah))
-                    {
-                        readBinary += "0";
-                    }
-                    else if (imgCompare((Bitmap)img, yah))
-                    {
-                        readBinary += "1";
-                    }
-                    img.Dispose();
                 }
                 inputTB.Text = BinaryToString(readBinary);
             }
@@ -105,7 +101,6 @@ namespace DrakeBinary
             string result = "";
 
             data = data.Replace(" ", String.Empty);
-            Console.WriteLine(data);
 
             while (data.Length > 0)
             {
@@ -125,6 +120,8 @@ namespace DrakeBinary
 
             if (!imageOne.Size.Equals(imageTwo.Size))
             {
+                imageOne.Dispose();
+                imageTwo.Dispose();
                 return false;
             }
             for (int x = 0; x < imageOne.Width; ++x)
@@ -133,6 +130,8 @@ namespace DrakeBinary
                 {
                     if (imageOne.GetPixel(x, y) != imageTwo.GetPixel(x, y))
                     {
+                        imageOne.Dispose();
+                        imageTwo.Dispose();
                         return false;
                     }
                 }
@@ -143,56 +142,74 @@ namespace DrakeBinary
 
         }
 
+        public bool IsDivisible(int x, int n)
+        {
+            return (x % n) == 0;
+        }
+
         private void GenImage(String binary)
         {
-            double binLength = binary.Length;
-            int finHeight, finWidth, imgWidth, imgHeight;
-            finHeight = (int)Math.Round(Math.Sqrt(binLength));
-            finWidth = finHeight;
+            int binLength = binary.Length;
+            char[] binArray = binary.ToCharArray();
+            int finHeight = 0, finWidth = 0, imgWidth, imgHeight;
+            if(IsDivisible(binLength, 9))
+            {
+                finWidth = (binLength/9);
+                finHeight = binLength / finWidth;
+            } else
+            {
+                int remainder = binLength % 9;
+                finWidth = ((binLength - remainder) / 9);
+                finHeight = binLength / finWidth;
+            }
             imgHeight = finHeight * nah.Height;
             imgWidth = finWidth * nah.Width;
             Bitmap newBitmap = new Bitmap(imgWidth, imgHeight);
-            Image[] imagearray = new Image[finHeight * finWidth];
             int index = 0;
-            foreach (char thisChar in binary)
-            {
-                Image curImage = nah;
-                if (thisChar == '0')
-                {
-                    imagearray[index] = new Bitmap(nah);
-                }
-                else if (thisChar == '1')
-                {
-                    imagearray[index] = new Bitmap(yah);
-                }
-                else if (thisChar == ' ')
-                {
-                    imagearray[index] = new Bitmap(blank);
-                }
-                index++;
-            }
+            
             using (Graphics graphics = Graphics.FromImage(newBitmap))
             {
                 graphics.Clear(System.Drawing.Color.Black);
-                for (int i = 0; i < finWidth; i++)
+                for(int row = 0; row < finHeight; row++)
                 {
-                    for (int j = 0; j < finHeight; j++)
+                    for(int col = 0; col < finWidth; col++)
                     {
-                        var newindex = i * finWidth + j;
-                        var destRectangle = new Rectangle(j*nah.Width, i*nah.Height, nah.Width, nah.Height);
+                        Image curImage;
+                        switch (binArray[index])
+                        {
+                            case '0':
+                                curImage = nah;
+                                break;
+                            case '1':
+                                curImage = yah;
+                                break;
+                            default:
+                                curImage = blank;
+                                break;
+                        }
+                        var destRectangle = new Rectangle(col * nah.Width, row * nah.Height, nah.Width, nah.Height);
                         var srcRectangle = new Rectangle(0, 0, nah.Width, nah.Height);
                         try
                         {
-                            graphics.DrawImage(imagearray[newindex], destRectangle, srcRectangle, GraphicsUnit.Pixel);
-                        } catch(System.ArgumentNullException)
+                            graphics.DrawImage(curImage, destRectangle, srcRectangle, GraphicsUnit.Pixel);
+                        }
+                        catch (System.ArgumentNullException)
                         {
                             graphics.DrawImage(blank, destRectangle, srcRectangle, GraphicsUnit.Pixel);
                         }
+                        index++;
+                        if(index >= binArray.Length)
+                        {
+                            break;
+                        }
+                    }
+                    if(index >= binArray.Length)
+                    {
+                        break;
                     }
                 }
                 graphics.Dispose();
             }
-            imagearray = null;
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "png files (.png)|*.png";
             openFileDialog.FilterIndex = 1;
